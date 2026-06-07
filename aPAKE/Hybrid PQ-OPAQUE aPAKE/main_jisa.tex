@@ -179,7 +179,7 @@ OPAQUE \sep PAKE \sep ML-KEM-768 \sep post-quantum cryptography \sep hybrid key 
 
 \subsection{Motivation}
 
-Passwords still carry most of the authentication burden in deployed systems. Across web applications and network services, passwords remain the dominant authentication mechanism~\cite{bonneau2012,florencio2007}, and their position has proved stubbornly resistant to replacement. The cryptographic response to this reality is password-authenticated key exchange (PAKE), a family of protocols in which two parties who share only a low-entropy secret can establish a protected channel without ever exposing that secret to an adversary~\cite{bellare2000}. For real deployments the augmented variants matter most, because they ask what survives once the server itself is breached. OPAQUE~\cite{jarecki2018} is one of the most thoroughly studied answers. When only the authentication database leaks, the server holds a cryptographic record rather than anything equivalent to the password~\cite{ietf-opaque}. That guarantee is not unconditional. It rests on a trust boundary many descriptions leave implicit, because losing the global secret from which the OPRF keys are derived is a different and far more damaging event than losing a passive copy of the record store.
+Passwords still carry most of the authentication burden in deployed systems. Across web applications and network services, passwords remain the dominant authentication mechanism~\cite{bonneau2012,florencio2007}, and their position has proved stubbornly resistant to replacement. The cryptographic response to this reality is password-authenticated key exchange (PAKE), a family of protocols in which two parties who share only a low-entropy secret can establish a protected channel without ever exposing that secret to an adversary~\cite{bellare2000}. For real deployments, the augmented variants matter most, because they ask what survives once the server itself is breached. OPAQUE~\cite{jarecki2018} is one of the most thoroughly studied answers. When only the authentication database leaks, the server holds a cryptographic record rather than anything equivalent to the password~\cite{ietf-opaque}. That guarantee is not unconditional. It rests on a trust boundary many descriptions leave implicit, because losing the global secret from which the OPRF keys are derived is a different and far more damaging event than losing a passive copy of the record store.
 
 The assumptions underneath this guarantee are classical, and that is exactly what a quantum adversary undermines. Shor's algorithm breaks the discrete-logarithm problem on which elliptic-curve key exchange, and the PAKE constructions built over it, ultimately depend~\cite{shor1994,bernstein2017}. How near that threat stands is still a moving target. An earlier estimate placed the cost of breaking Ristretto255/Curve25519 at roughly 2330 logical qubits~\cite{roetteler2017}, whereas a more recent analysis of 256-bit ECDLP over the \codeid{secp256k1} curve reports either no more than 1200 logical qubits with 90~million Toffoli gates or no more than 1450 with 70~million~\cite{babbush2026}. Neither figure is parameter-specific to Ristretto255, and we invoke them only to fix a contemporary sense of scale for 256-bit migration risk. What turns this from a distant worry into a present one is the harvest-now-decrypt-later strategy~\cite{mosca2018}. An adversary who records today's traffic and simply waits can still profit once the hardware arrives, which is the precise predicament of any secret meant to stay confidential for years.
 
@@ -220,7 +220,7 @@ wire-size accounting, and serializer tests & This is an OPAQUE-like
 migration profile, not a claim of full RFC~9807 conformance. \\
 Is the post-quantum material transcript-bound? & Account context,
 extended transcript equations, MAC confirmation, and mutation tests &
-The combiner argument is scoped to the stated extractor interpretation. \\
+The combiner argument is scoped to the stated dual-PRF combiner model. \\
 What formal evidence supports the design? & Split ProVerif models and a
 surrogate Tamarin 4DH model & Symbolic evidence does not machine-check the
 Rust implementation or side-channel behavior. \\
@@ -295,7 +295,7 @@ about the status of each source we cite. Final standards and RFCs such as
 FIPS~203 and RFC~9807 serve as normative anchors. Peer-reviewed papers
 carry the established PAKE and post-quantum results. ePrints and
 Internet-Drafts supply current evidence that we treat as provisional.
-Technical white papers enter only for contextual calibration.
+Technical white papers are included only for contextual calibration.
 
 \subsection{Password-Authenticated Key-Exchange Protocols}
 
@@ -404,8 +404,8 @@ key-stretching function (KSF), the criterion that matters here is the balance am
 strength, message size, and deployability.
 
 ML-KEM-768 sits at a middle operating point in that trade-off space.
-Within the ML-KEM family it matches NIST level~3 to the long-term
-protection of account credentials and session secrets, and it avoids
+Within the ML-KEM family, it provides NIST level~3 protection for
+long-term account credentials and session secrets, and it avoids
 the heavier transport burden of ML-KEM-1024. The values
 $pk_{\mathrm{kem}}$ and $ct_{\mathrm{kem}}$ do enlarge
 messages relative to classical OPAQUE, yet they leave the protocol
@@ -622,7 +622,7 @@ surface.}
   \item[R2] (Post-quantum reinforcement): inclusion of a KEM-based
         contribution against ``harvest-now-decrypt-later'' exposure;
   \item[R3] (Hybrid-source interpretation): the key-material combiner
-        should support a stated extractor-based reading in the adopted
+        should support a stated dual-PRF combiner reading in the adopted
         model, so that the paper can identify precisely which source
         assumptions remain necessary for final-key recovery;
   \item[R4] (Interaction preservation): preservation of three protocol
@@ -667,7 +667,7 @@ within the threat model considered here.
 \end{definition}
 
 \begin{definition}[Pseudorandomness of HKDF-Extract]
-HKDF-Extract based on HMAC-SHA-512 is modeled as an extractor: if
+HKDF-Extract based on HMAC-SHA-512 is modeled as a dual-PRF, equivalently as a computational extractor: if
 $\mathrm{IKM}$ contains hidden computational entropy relative to the
 adversary, then the output PRK is computationally indistinguishable
 from uniform up to advantage at most~$\varepsilon$.
@@ -762,7 +762,7 @@ remains essentially unchanged.}
 \label{fig:wire-size-growth}
 \end{figure}
 
-Figure~\ref{fig:wire-size-growth} shows that the post-quantum layer leaves finalization almost untouched and concentrates the added transport cost in the first two messages, the ones that carry $pk_{\mathrm{kem}}$ and $ct_{\mathrm{kem}}$.
+Figure~\ref{fig:wire-size-growth} shows that the post-quantum layer leaves finalization almost untouched and concentrates the added transport cost in the first two messages, the ones that carry $pk_{\mathrm{kem}}$ and $ct_{\mathrm{kem}}$. The $+516\%$ figure is therefore a relative increase over a compact classical payload. It does not indicate an extra round or persistent post-quantum account state. It is the transport cost of carrying the fixed-size ML-KEM public key and ciphertext.
 
 \subsection{Normative Wire Format and Rejection Rules}
 
@@ -824,7 +824,7 @@ key:
     \label{eq:oprf-key}
 \end{align}
 where $\mathrm{ctr}$ is the smallest one-byte counter for which the resulting
-scalar is non-zero. The derivation is two-level on purpose. The seed
+scalar is non-zero. The derivation is two-level by design. The seed
 $s_{\mathrm{oprf}}$ is a domain-separated value computed once from $\sigoprf$,
 and each account key is derived from the seed rather than from the root
 directly, which keeps every account key two HMAC steps removed from the root
@@ -886,7 +886,7 @@ The envelope seals $PK_S \| sk_C \| PK_C$ under XSalsa20-Poly1305 with a key der
 
 \subsection{Binding of Account Identifier and Context}
 
-We pin down context that most abstract descriptions of OPAQUE leave implicit. Every wire-format message begins with a one-byte version prefix $v = \mathtt{0x01}$, which separates the payload from the full wire format and lets the parser reject unsupported versions. The protocol also names the account explicitly through an identifier $\acct$, a stable byte string that we treat as cryptographic context rather than as a mere database lookup key.
+We make explicit the account context that most abstract descriptions of OPAQUE leave implicit. Every wire-format message begins with a one-byte version prefix $v = \mathtt{0x01}$, which separates the payload from the full wire format and lets the parser reject unsupported versions. The protocol also names the account explicitly through an identifier $\acct$, a stable byte string that we treat as cryptographic context rather than as a mere database lookup key.
 
 Define the account-context hash used by the evaluated artifact as a
 domain-separated binding of the account identifier:
@@ -1099,7 +1099,7 @@ $\mathcal{A}_Q$, and the combined guarantee against the composite attacker
 $\mathcal{A}_{CQ}$.
 
 \paragraph{Offline guessing under a fixed trust boundary}
-We keep the compromise case narrow on purpose. The adversary may read the passive server-side storage $\mathrm{rec}$ and the observable transcripts, but never $\sigoprf$. Under that condition the record gives no efficient offline verifier for dictionary candidates except through a break of OPRF pseudorandomness or envelope security. Once $\sigoprf$ leaks, the situation inverts. The attacker can then evaluate the account-specific OPRF path, and what remains is a dictionary search whose per-guess cost is dominated by Argon2id. The claim thus speaks to one specific operational boundary, not to every conceivable server compromise.
+We keep the compromise case narrow by design. The adversary may read the passive server-side storage $\mathrm{rec}$ and the observable transcripts, but never $\sigoprf$. Under that condition the record gives no efficient offline verifier for dictionary candidates except through a break of OPRF pseudorandomness or envelope security. Once $\sigoprf$ leaks, the situation inverts. The attacker can then evaluate the account-specific OPRF path, and what remains is a dictionary search whose per-guess cost is dominated by Argon2id. The claim thus speaks to one specific operational boundary, not to every conceivable server compromise.
 
 \begin{sketchproof}
 Let $S_0,S_1,S_2$ denote the real database-disclosure experiment, the
@@ -1183,8 +1183,8 @@ points. In parallel, $ss_{\mathrm{kem}}$ remains protected under the
 IND-CCA security of ML-KEM-768 together with correct erasure and absence
 of leakage from the session-local $sk_{\mathrm{kem}}$. Thus
 post-session exposure of long-term keys alone does not reconstruct the
-full input to the hybrid extractor. We record the following as an
-interpretive bound under the stated extractor model, not as a theorem:
+full input to the hybrid combiner. We record the following as an
+interpretive bound under the stated dual-PRF combiner model, not as a theorem:
 \begin{equation}
   \label{eq:fs-advantage-bound}
   \begin{aligned}
@@ -1223,34 +1223,42 @@ Let
 \]
 If, for a fixed transcript $\tau$, at least one of the sources
 $\mathrm{IKM}_{\mathrm{cl}}$ or $\mathrm{IKM}_{\mathrm{pq}}$ remains
-computationally hidden and retains sufficient entropy for the extractor
+computationally hidden and retains sufficient entropy for the dual-PRF combiner
 model, then the extracted pre-key is
 \[
   \mathrm{PRK} =
   \mathrm{HKDF\text{-}Extract}(\mathrm{salt}_{\tau},
     \mathrm{IKM}_{\mathrm{cl}} \| \mathrm{IKM}_{\mathrm{pq}}).
 \]
-This value is treated as pseudorandom under the standard extractor
-interpretation of HKDF-Extract. This gives the intended hybrid-source
-reading of the key schedule: explicit recovery of the real session key from the
-transcript requires compromise of \emph{both} sources. The statement is not a
-standalone computational proof of the combiner. It is an
-extractor-based interpretation that is used consistently in the
-subsequent symbolic model and implementation checks.
+The hybrid key schedule follows the concatenation-combiner pattern used in
+hybrid KEM and TLS migration analyses~\cite{stebila2024,rfc9794,giacon2018,bindel2019}.
+The classical source and the ML-KEM source are concatenated and compressed by
+HKDF-Extract, while the public KEM material and the protocol context are bound
+through the authenticated transcript. This places the construction close to the
+dual-PRF KEM-combiner analyses, in which a concatenated pair of independent
+secrets stays pseudorandom under whichever source survives, provided the
+compressing step behaves as a dual-PRF. The present paper uses that literature as
+support for the combiner rationale rather than as a complete proof for the
+OPAQUE-derived aPAKE as a whole. The intended reading is therefore that explicit
+recovery of the real session key from the transcript requires compromise of
+\emph{both} sources, and extending the combiner argument to the full
+OPAQUE-derived aPAKE remains outside the present proof.
 
 \begin{sketchproof}
 Let $S$ denote the source among
 $\{\mathrm{IKM}_{\mathrm{cl}}, \mathrm{IKM}_{\mathrm{pq}}\}$ that
 remains computationally hidden relative to the fixed transcript $\tau$
-and retains sufficient entropy in the extractor model, and let $X$
+and retains sufficient entropy in the dual-PRF combiner model, and let $X$
 denote the other source. Then
 $\mathrm{IKM}_{\mathrm{cl}} \| \mathrm{IKM}_{\mathrm{pq}}$ may be
-written as a concatenation of $S$ and $X$. The standard extractor property of HMAC-based
-HKDF-Extract~\cite{krawczyk2010hkdf} suggests that if $S$ is hidden from the
-adversary with sufficient entropy, then $\mathrm{PRK}$
-remains pseudorandom even for arbitrary $X$. We read this as an interpretive bound rather than a theorem.
+written as a concatenation of $S$ and $X$. Following the concatenation-combiner analyses for hybrid
+KEMs~\cite{giacon2018,bindel2019} and the HKDF construction of
+Krawczyk~\cite{krawczyk2010hkdf}, if $S$ is hidden from the
+adversary with sufficient entropy and HKDF-Extract behaves as a dual-PRF on the
+concatenated input, then $\mathrm{PRK}$
+remains pseudorandom even for adversarially chosen $X$. We read this as a combiner-rationale bound rather than a full theorem for the OPAQUE-derived aPAKE.
 Indistinguishability of the final key can fail only
-through a break of the surviving source or a break of the extractor
+through a break of the surviving source or a break of the dual-PRF step
 itself:
 \begin{equation}
   \label{eq:hybrid-advantage-bound}
@@ -1266,7 +1274,7 @@ itself:
 \end{equation}
 \end{sketchproof}
 
-This bound captures the hybrid-source reading carried through the rest of the paper. When at least one of the two sources stays computationally hidden and HKDF-Extract behaves as an extractor, the derived PRK stays pseudorandom up to the additive extractor term. The reading is narrow. Across this reduction sketch and the symbolic analysis below, we model compromise of the final key as something that demands simultaneous weakening of the classical and post-quantum layers. The bound's right-hand side matches the forward-secrecy bound in Eq.~\eqref{eq:fs-advantage-bound}, since both encode the same hybrid-source condition, namely that recovering the session key means breaking whichever source survives, classical or post-quantum, beyond the additive extractor term. Figure~\ref{fig:hybrid-condition-surface} visualizes this interpretation.
+This bound captures the hybrid-source reading carried through the rest of the paper. When at least one of the two sources stays computationally hidden and HKDF-Extract behaves as a dual-PRF on the concatenated input, the derived PRK stays pseudorandom up to the additive HKDF-Extract term. The reading is narrow. Across this reduction sketch and the symbolic analysis below, we model compromise of the final key as something that demands simultaneous weakening of the classical and post-quantum layers. The bound's right-hand side matches the forward-secrecy bound in Eq.~\eqref{eq:fs-advantage-bound}, since both encode the same hybrid-source condition, namely that recovering the session key means breaking whichever source survives, classical or post-quantum, beyond the additive HKDF-Extract term. Figure~\ref{fig:hybrid-condition-surface} visualizes this interpretation.
 
 \begin{figure}[htbp]
 \centering
@@ -1274,10 +1282,10 @@ This bound captures the hybrid-source reading carried through the rest of the pa
 \caption{Condition map for the hybrid-combiner interpretation used in
 Eq.~\eqref{eq:hybrid-advantage-bound}. Rows and columns describe whether
 the classical or ML-KEM source remains hidden relative to a fixed
-transcript. Under the extractor interpretation, the PRK remains
+transcript. Under the concatenation-combiner interpretation, the PRK remains
 pseudorandom whenever at least one source remains hidden. Simultaneous
 recovery of both sources is the source-level condition not ruled out by
-the bound, up to the additive extractor term.}
+the bound, up to the additive HKDF-Extract term.}
 \label{fig:hybrid-condition-surface}
 \end{figure}
 
@@ -1578,7 +1586,7 @@ following:
 \subsection{Testing and Reproducibility}
 
 The evaluated revision of the workspace contains 157 passing tests and
-one slow regression scenario that we keep ignored on purpose. These tests
+one slow regression scenario that we keep intentionally ignored. These tests
 are unit, integration, property-based, and regression checks that cover
 the protocol lifecycle, the wire format, the external API contract,
 OPRF/KEM correctness, and secure rejection of invalid states.
@@ -1591,7 +1599,7 @@ tests, the documented Criterion benchmark targets for timing,
 \texttt{proverif} for the two ProVerif files, and
 \texttt{tamarin-prover} for the archived Tamarin model. For the snapshot
 described here, a faithful review should yield 157 passed tests, one
-slow regression that stays ignored on purpose, 5/5 ProVerif queries, and
+slow regression that stays intentionally ignored, 5/5 ProVerif queries, and
 8/8 Tamarin lemmas.
 
 These checks complement the symbolic analysis rather than duplicate it.
@@ -1781,7 +1789,7 @@ Key-compromise condition & Weakening of the classical contribution & Compromise 
 
 The evidence is layered, not monolithic, and each layer answers a different question. ProVerif handles secrecy and correspondence in symbolic models, Tamarin captures stateful properties of the surrogate 4DH model, and the Rust test suite exercises executable behavior that symbolic tools never see, including serialization, state lifetime, boundary checks, version handling, and the external API contract. All three point to the same protocol description, yet they do not carry the same evidentiary weight.
 
-The weakest link in the argument is the hybrid-source reading of the combiner. The extractor rationale and the surrogate 4DH Tamarin lemma both support it, but it remains short of a full computational proof. That distinction matters, because the paper does not claim that the implementation is machine-verified. What it claims is narrower, that the design, models, tests, and measurements are mutually consistent under the stated assumptions. Table~\ref{tab:claim-scope} sets each of these claims against its boundary.
+The weakest link in the argument is the hybrid-source reading of the combiner. The concatenation-combiner rationale, grounded in the hybrid-KEM and dual-PRF literature, and the surrogate 4DH Tamarin lemma both support it, but it remains short of a full computational proof for the OPAQUE-derived aPAKE. That distinction matters, because the paper does not claim that the implementation is machine-verified. What it claims is narrower, that the design, models, tests, and measurements are mutually consistent under the stated assumptions. Table~\ref{tab:claim-scope} sets each of these claims against its boundary.
 
 \begin{table}[htbp]
 \caption{Scope of the main claims and supporting evidence}
@@ -1804,7 +1812,7 @@ database-compromise model, negative regression tests, and the stated
 trust boundary for $\sigoprf$ & The claim does not survive compromise of
 the OPRF root secret or a deployment that stores it with the password
 database. \\
-Hybrid-source key dependence & HKDF extractor rationale, the
+Hybrid-source key dependence & HKDF dual-PRF combiner rationale, the
 surrogate 4DH Tamarin lemma, and agreement between the specification and
 implementation paths & This is evidence for the intended combiner
 interpretation, not a full computational proof of the hybrid PAKE. \\
@@ -2074,6 +2082,24 @@ Lyu~Y., Liu~S.
 Hybrid password authentication key exchange in the UC framework.
 Cryptology ePrint Archive, Paper~2024/1630, 2024.
 URL:~\url{https://eprint.iacr.org/2024/1630}.
+
+\bibitem{giacon2018}
+Giacon~F., Heuer~F., Poettering~B.
+KEM combiners.
+In: Public-Key Cryptography -- PKC 2018, LNCS~10769, Springer, 2018, pp.~190--218.
+DOI:~\url{https://doi.org/10.1007/978-3-319-76578-5_7}.
+
+\bibitem{bindel2019}
+Bindel~N., Brendel~J., Fischlin~M., Gon\c{c}alves~B., Stebila~D.
+Hybrid key encapsulation mechanisms and authenticated key exchange.
+In: Post-Quantum Cryptography -- PQCrypto 2019, LNCS~11505, Springer, 2019, pp.~206--226.
+DOI:~\url{https://doi.org/10.1007/978-3-030-25510-7_12}.
+
+\bibitem{rfc9794}
+Driscoll~F., Parsons~M., Hale~B.
+Terminology for post-quantum traditional hybrid schemes.
+RFC~9794, IETF, 2025.
+DOI:~\url{https://doi.org/10.17487/RFC9794}.
 
 \bibitem{boyko2000}
 Boyko~V., MacKenzie~P., Patel~S.
