@@ -132,12 +132,12 @@ def fig5():
 
 # ---------------- Figure 6: runtime profile ----------------
 # values in microseconds; (label, value_us, display, color)
-BENCH=[('4DH profile',245.57,r'245.57 $\mu$s',BLUE),
-       ('ML-KEM round',492.30,r'492.30 $\mu$s',ORANGE),
-       ('KE2 generation',592.69,r'592.69 $\mu$s',GREEN),
-       ('End-to-end auth',836110.0,'836.11 ms',GRAY),
-       ('Argon2id',841370.0,'841.37 ms',RED),
-       ('KE3 generation',1101000.0,'1.101 s',('#efd9d4','#9c6b63'))]
+BENCH=[('4DH profile',257.79,r'257.79 $\mu$s',BLUE),
+       ('ML-KEM round',333.22,r'333.22 $\mu$s',ORANGE),
+       ('KE2 generation',568.03,r'568.03 $\mu$s',GREEN),
+       ('Argon2id',784600.0,'784.60 ms',RED),
+       ('KE3 generation',794720.0,'794.72 ms',('#efd9d4','#9c6b63')),
+       ('End-to-end auth',798740.0,'798.74 ms',GRAY)]
 def fig6():
     fig,ax=plt.subplots(figsize=(7.2,3.8),dpi=130)
     labels=[b[0] for b in BENCH][::-1]; vals=[b[1] for b in BENCH][::-1]
