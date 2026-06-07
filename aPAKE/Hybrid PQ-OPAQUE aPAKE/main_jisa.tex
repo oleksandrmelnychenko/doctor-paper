@@ -75,6 +75,7 @@
   urlcolor=blue,
 }
 \urlstyle{same}
+\usepackage{orcidlink}
 
 % ── Custom column types ──────────────────────────────────────
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
@@ -107,11 +108,8 @@
 
 \title{Hybrid PQ-OPAQUE: A Three-Message Augmented PAKE from OPAQUE and ML-KEM-768}
 
-\author{Oleksandr Melnychenko}
-% TODO (release): Elsevier/JISA requires a corresponding-author email.
-%   Add it after the author line, e.g.:  \ead{oleksandr.melnychenko@khnu.km.ua}
-%   ORCID (recommended): add \usepackage{orcidlink} to the preamble, then
-%   \author{Oleksandr Melnychenko\,\orcidlink{0000-0000-0000-0000}}
+\author{Oleksandr Melnychenko\,\orcidlink{0000-0001-8565-7092}}
+\ead{melnychenko@khmnu.edu.ua}
 
 \address{Khmelnytskyi National University, Khmelnytskyi, Ukraine}
 
@@ -719,7 +717,7 @@ KDF (extract) & HKDF-Extract (HMAC-SHA-512) & \codeid{hmac + sha2} & 256 bits \\
 KDF (expand) & HKDF-Expand (HMAC-SHA-512) & \codeid{hmac + sha2} & 256 bits \\
 MAC & HMAC-SHA-512 & \codeid{hmac + sha2} & 256 bits \\
 KSF & Argon2id (MODERATE) & \codeid{argon2} & Adaptive \\
-AE & XSalsa20-Poly1305 & \makecell[l]{\codeid{crypto\_}\\\codeid{secretbox}} & 256 bits \\
+AE & XSalsa20-Poly1305 & \makecell[l]{\codeid{crypto\_}\\\codeid{secretbox}} & 256-bit key, 128-bit tag \\
 KEM & ML-KEM-768 (FIPS~203) & \codeid{ml-kem} & NIST Level~3 \\
 Classical exchange & 4DH (Ristretto255) & \makecell[l]{\codeid{curve25519-}\\\codeid{dalek}} & 128 bits \\
 Constant-time comparison & Bytewise without early exit & \codeid{subtle} & --- \\
@@ -1590,8 +1588,8 @@ are unit, integration, property-based, and regression checks that cover
 the protocol lifecycle, the wire format, the external API contract,
 OPRF/KEM correctness, and secure rejection of invalid states.
 
-For archival review, the source snapshot should record the exact commit
-identifier along with the commands that reproduce each evidence layer.
+For archival review, the reviewed source snapshot is commit
+\texttt{1b81b99}, together with the commands that reproduce each evidence layer.
 Those commands are \texttt{cargo test --workspace} for the executable
 tests, the documented Criterion benchmark targets for timing,
 \texttt{proverif} for the two ProVerif files, and
@@ -1899,9 +1897,9 @@ require post-quantum signatures.
 The implementation, tests, benchmarks, and formal models are maintained
 in the accompanying source repository:
 \url{https://github.com/oleksandrmelnychenko/aura-security-opaque-rs}.
-The submission artifact should identify the exact revision used for
-review and, where required by the venue, include the same revision as a
-source bundle or DOI-backed archive. The snapshot contains the Rust
+The reviewed revision is commit \texttt{1b81b99} of that repository,
+archived as a tagged release or DOI-backed snapshot (for example via
+Zenodo) where the venue requires it. The snapshot contains the Rust
 protocol crates, foreign-call adapter, deterministic and
 property-based tests, Criterion benchmark harnesses, ProVerif models,
 Tamarin model, and archived verification logs. For the artifact state
@@ -2139,8 +2137,8 @@ DOI:~\url{https://doi.org/10.1007/978-3-031-30589-4_15}.
 \bibitem{vos2025}
 Vos~J., Jarecki~S., Wood~C.\,A.
 Hybrid Post-Quantum Password Authenticated Key Exchange.
-Individual Internet-Draft draft-vos-cfrg-pqpake-00, April~2025.
-URL:~\url{https://datatracker.ietf.org/doc/draft-vos-cfrg-pqpake/00/}.
+Individual Internet-Draft draft-vos-cfrg-pqpake-01, April~2026.
+URL:~\url{https://datatracker.ietf.org/doc/draft-vos-cfrg-pqpake/01/}.
 
 \bibitem{biryukov2016}
 Biryukov~A., Dinu~D., Khovratovich~D.
