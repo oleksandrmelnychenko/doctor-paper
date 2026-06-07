@@ -161,7 +161,7 @@ machine-checked proof of implementation correctness.
 
 On the stated Linux/Xeon benchmark platform, the complete hybrid handshake
 occupies 2715~bytes in wire format. End-to-end authentication takes
-798.74~ms, and once the key-stretching function is set aside, the post-quantum operations add 365.29~$\mu$s. The
+798.74~ms. Excluding the key-stretching function, the post-quantum operations add only 365.29~$\mu$s of computation. The
 measurements show that Argon2id dominates latency, while ML-KEM mainly
 affects transport size. The main operational boundary is separation of
 $\sigoprf$ from passive authentication records.
@@ -203,7 +203,7 @@ vouch for the cryptographic security of Hybrid PQ-OPAQUE.
 
 \subsection{Research Scope and Evaluation Objective}
 
-This paper studies a narrower engineering question. We ask whether OPAQUE can be reinforced with ML-KEM-768 while preserving its three-message authentication flow. The construction combines four Ristretto255 Diffie--Hellman values with an ML-KEM-768 shared secret, fixes wire-format versioning, and binds an explicit account context represented by the account identifier $\acct$ into the transcript. We evaluate the result using symbolic analysis and an executable reference implementation in Rust. What we offer is not a general theory of hybrid PAKE composition. It is an implementation-level augmented-PAKE design with explicit syntax, stated assumptions, and a narrowly limited claim set.
+This paper studies a narrower engineering question. We ask whether OPAQUE can be reinforced with ML-KEM-768 while preserving its three-message authentication flow. The construction combines four Ristretto255 Diffie--Hellman values with an ML-KEM-768 shared secret, fixes wire-format versioning, and binds an explicit account context represented by the account identifier $\acct$ into the transcript. We evaluate the result using symbolic analysis and an executable reference implementation in Rust. What we offer is not a general theory of hybrid PAKE composition. It is an implementation-level augmented-PAKE design with explicit syntax, stated assumptions, and a narrowly limited claim set. The central novelty is therefore not a new clean-slate PAKE or a general combiner theorem, but a reproducible migration profile that makes the OPAQUE authentication transcript itself hybrid post-quantum while preserving the augmented-PAKE trust boundary, the three-message interaction pattern, and the existing account-record model.
 
 Our evaluation objective is to determine whether this migration profile can be specified, modeled, implemented, and measured without silently changing the OPAQUE interaction profile or the augmented-PAKE trust boundary. The paper therefore keeps each claim tied to a corresponding evidence layer, as summarized in Table~\ref{tab:objective-evidence}. Throughout, the term research artifact refers to the accompanying source package that holds these evidence layers in alignment, namely the Rust crates, formal models, archived verification logs, tests, benchmark harnesses, and adapter documentation.
 
@@ -1900,7 +1900,7 @@ in the accompanying source repository:
 \url{https://github.com/oleksandrmelnychenko/aura-security-opaque-rs}.
 The reviewed revision is archived on Zenodo at
 \url{https://doi.org/10.5281/zenodo.20584791}, which corresponds to release
-\texttt{v2.1.0} (commit \texttt{1fa11c8}) of that repository. The all-versions
+\texttt{v2.1.0} (commit \texttt{1fa11c8993d3a\allowbreak{}717a96780c4cb\allowbreak{}bdcac57caf228c}) of that repository. The all-versions
 concept DOI is \url{https://doi.org/10.5281/zenodo.20584790}. The snapshot contains the Rust
 protocol crates, foreign-call adapter, deterministic and
 property-based tests, Criterion benchmark harnesses, ProVerif models,
