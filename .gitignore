@@ -1,0 +1,14 @@
+.DS_Store
+.claude/
+
+# LaTeX build artifacts (regenerated on compile; PDF is kept)
+*.aux
+*.log
+*.out
+*.spl
+*.synctex.gz
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.toc

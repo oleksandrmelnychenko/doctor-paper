@@ -1,0 +1,8 @@
+\ProvidesFile{TUptm.fd}[2026/04/04 Early TU fallback for IEEEtran ptm family]
+\DeclareFontFamily{TU}{ptm}{}
+\DeclareFontShape{TU}{ptm}{m}{n}{<->ssub * lmr/m/n}{}
+\DeclareFontShape{TU}{ptm}{m}{it}{<->ssub * lmr/m/it}{}
+\DeclareFontShape{TU}{ptm}{bx}{n}{<->ssub * lmr/bx/n}{}
+\DeclareFontShape{TU}{ptm}{bx}{it}{<->ssub * lmr/bx/it}{}
+\DeclareFontShape{TU}{ptm}{m}{sc}{<->ssub * lmr/m/sc}{}
+\endinput
