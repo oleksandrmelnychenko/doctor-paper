@@ -161,7 +161,7 @@ machine-checked proof of implementation correctness.
 
 On the stated Linux/Xeon benchmark platform, the complete hybrid handshake
 occupies 2715~bytes in wire format. End-to-end authentication takes
-798.74~ms, and the post-quantum path without the key-stretching function adds 365.29~$\mu$s. The
+798.74~ms, and once the key-stretching function is set aside, the post-quantum operations add 365.29~$\mu$s. The
 measurements show that Argon2id dominates latency, while ML-KEM mainly
 affects transport size. The main operational boundary is separation of
 $\sigoprf$ from passive authentication records.
@@ -179,7 +179,7 @@ OPAQUE \sep PAKE \sep ML-KEM-768 \sep post-quantum cryptography \sep hybrid key 
 
 \subsection{Motivation}
 
-Passwords still carry most of the authentication burden in deployed systems. Across web applications and network services, passwords remain the dominant authentication mechanism~\cite{bonneau2012,florencio2007}, and their position has proved stubbornly resistant to replacement. The cryptographic response to this reality is password-authenticated key exchange (PAKE), a family of protocols in which two parties who share only a low-entropy secret can establish a protected channel without ever exposing that secret to an adversary~\cite{bellare2000}. For real deployments the augmented variants matter most, because they ask what survives once the server itself is breached. OPAQUE~\cite{jarecki2018} is the most thoroughly studied answer. When only the authentication database leaks, the server holds a cryptographic record rather than anything equivalent to the password~\cite{ietf-opaque}. That guarantee is not unconditional. It rests on a trust boundary many descriptions leave implicit, because losing the global secret from which the OPRF keys are derived is a different and far more damaging event than losing a passive copy of the record store.
+Passwords still carry most of the authentication burden in deployed systems. Across web applications and network services, passwords remain the dominant authentication mechanism~\cite{bonneau2012,florencio2007}, and their position has proved stubbornly resistant to replacement. The cryptographic response to this reality is password-authenticated key exchange (PAKE), a family of protocols in which two parties who share only a low-entropy secret can establish a protected channel without ever exposing that secret to an adversary~\cite{bellare2000}. For real deployments the augmented variants matter most, because they ask what survives once the server itself is breached. OPAQUE~\cite{jarecki2018} is one of the most thoroughly studied answers. When only the authentication database leaks, the server holds a cryptographic record rather than anything equivalent to the password~\cite{ietf-opaque}. That guarantee is not unconditional. It rests on a trust boundary many descriptions leave implicit, because losing the global secret from which the OPRF keys are derived is a different and far more damaging event than losing a passive copy of the record store.
 
 The assumptions underneath this guarantee are classical, and that is exactly what a quantum adversary undermines. Shor's algorithm breaks the discrete-logarithm problem on which elliptic-curve key exchange, and the PAKE constructions built over it, ultimately depend~\cite{shor1994,bernstein2017}. How near that threat stands is still a moving target. An earlier estimate placed the cost of breaking Ristretto255/Curve25519 at roughly 2330 logical qubits~\cite{roetteler2017}, whereas a more recent analysis of 256-bit ECDLP over the \codeid{secp256k1} curve reports either no more than 1200 logical qubits with 90~million Toffoli gates or no more than 1450 with 70~million~\cite{babbush2026}. Neither figure is parameter-specific to Ristretto255, and we invoke them only to fix a contemporary sense of scale for 256-bit migration risk. What turns this from a distant worry into a present one is the harvest-now-decrypt-later strategy~\cite{mosca2018}. An adversary who records today's traffic and simply waits can still profit once the hardware arrives, which is the precise predicament of any secret meant to stay confidential for years.
 
@@ -1583,8 +1583,9 @@ are unit, integration, property-based, and regression checks that cover
 the protocol lifecycle, the wire format, the external API contract,
 OPRF/KEM correctness, and secure rejection of invalid states.
 
-For archival review, the reviewed source snapshot is commit
-\texttt{1b81b99fd7595fdd744730ceac70821b73178116}, together with the commands that reproduce each evidence layer.
+For archival review, the reviewed source snapshot is the commit recorded in the
+Data and Software Availability section, together with the commands that reproduce
+each evidence layer.
 Those commands are \texttt{cargo test --workspace} for the executable
 tests, the documented Criterion benchmark targets for timing,
 \texttt{proverif} for the two ProVerif files, and
