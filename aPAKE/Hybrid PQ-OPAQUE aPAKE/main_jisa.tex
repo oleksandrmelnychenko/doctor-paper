@@ -115,34 +115,24 @@
 % ============================================================
 \begin{abstract}
 % ============================================================
-Password-backed accounts concentrate long-lived security risk in a
-human-memorable secret. TLS protects the channel only to its termination point,
-where application bugs, memory disclosure, backups, and database compromise can
-turn password material into an offline guessing surface. Password-authenticated
-key exchange (PAKE) changes this interface by using the password to prove
-knowledge and derive fresh keys rather than sending it to the service. For
-account systems, the augmented form lets the record-holding side authenticate
-users without storing the password or a password-equivalent verifier. OPAQUE is
-the standardized augmented PAKE most directly suited to this setting, yet its
-key-exchange layer remains classical and contributes no post-quantum secret to
-the transcript.
-
-This work presents Hybrid PQ-OPAQUE, a reproducible migration profile that
-adds ephemeral ML-KEM-768 material to KE1--KE2--KE3 without a
-fourth message or persistent post-quantum account state. The construction
-combines four Ristretto255 Diffie--Hellman values with the ML-KEM shared
-secret through HKDF under a transcript-derived salt, fixes byte-level message
-layouts and version handling, and binds account context together with
-$pk_{\mathrm{kem}}$ and $ct_{\mathrm{kem}}$.
-
-The evaluation uses ProVerif~2.05 models, a Tamarin~1.10.0 surrogate
-4DH model, and a reference Rust implementation. The post-quantum claim is
-narrow: ML-KEM protects recorded session keys, while OPRF-based offline
-dictionary resistance remains classical and Argon2id-bound. On the benchmark
-platform the handshake occupies 2715~bytes, end-to-end authentication takes
-806.13~ms, and the hybrid extension adds 351.80~$\mu$s over the
-key-stretching-free classical path. Argon2id dominates latency, while ML-KEM
-mainly affects transport size.
+Password authentication still secures most user accounts, and augmented PAKE
+protocols such as OPAQUE let a server authenticate users without storing a
+password-equivalent verifier. Its key-exchange layer is classical, however, and
+contributes no post-quantum secret, so a quantum adversary who records today's
+traffic could later recover session keys. In this work, we propose Hybrid
+PQ-OPAQUE, a migration profile that adds ephemeral ML-KEM-768 to the
+three-message OPAQUE exchange without a fourth message or persistent
+post-quantum account state. The construction concatenates four Ristretto255
+Diffie--Hellman values with the ML-KEM shared secret and compresses them with
+HKDF under a transcript-derived salt, using a fixed byte-level wire format that
+binds account context. Relative to classical OPAQUE the handshake grows by 2272
+bytes, about 516 percent of the classical payload, while adding only 351.80
+microseconds of computation, about 45.8 percent, on the key-stretching-free
+path. End-to-end authentication takes about 806 milliseconds and is dominated by
+the Argon2id key-stretching function, while ML-KEM mainly enlarges transport.
+The post-quantum guarantee is scoped to session-key confidentiality, because the
+OPRF and password layer stays classical, and the design is backed by symbolic
+models and a public Rust artifact.
 \end{abstract}
 
 \begin{keyword}
@@ -2037,94 +2027,90 @@ Key-source recovery condition & Weakening of the classical contribution & Break 
 
 % ============================================================
 \section{Discussion of Results}
+\label{sec:discussion}
 % ============================================================
 
-\subsection{Interpretation of the Formal and Experimental Evidence}
+The evidence assembled in this work is layered rather than monolithic, and each
+layer answers a different question. The split ProVerif models and the surrogate
+Tamarin model (Table~\ref{tab:verification-summary}) establish symbolic secrecy,
+authentication, and key-dependence properties, the Rust test suite exercises
+serialization, state lifetime, and rejection behavior that symbolic tools never
+see, and the Criterion measurements (Tables~\ref{tab:micro-bench}
+and~\ref{tab:protocol-bench}) locate the real cost of the design. Read together,
+these layers converge on one protocol description, yet they do not carry equal
+weight, and we keep each claim tied to the evidence that supports it.
 
-The evidence is layered, not monolithic, and each layer answers a different question. ProVerif handles secrecy and correspondence in symbolic models, Tamarin captures stateful properties of the surrogate 4DH model, and the Rust test suite exercises executable behavior that symbolic tools never see, including serialization, state lifetime, boundary checks, version handling, and the external API contract. All three point to the same protocol description, yet they do not carry the same evidentiary weight.
+Set against the prior work reviewed in Section~2, the contribution is a
+migration rather than a new primitive. CHIC~\cite{arriaga2024} is a balanced,
+post-quantum-only PAKE in which a lattice KEM is the core of the exchange, with
+universal-composability security under one-way and anonymity assumptions on the
+KEM. CPaceOQUAKE+, specified in the CFRG hybrid-PAKE draft~\cite{vos2025}, is a
+hybrid augmented PAKE that composes a classical and a post-quantum run in
+sequence over a five-message flow. Classical OPAQUE~\cite{jarecki2018,ietf-opaque}
+supplies the augmented record model but no post-quantum protection. Against this
+background, Hybrid PQ-OPAQUE keeps the asymmetric OPAQUE record and the unchanged
+three-message KE1--KE2--KE3 flow, stays a classical-plus-post-quantum hybrid
+rather than a post-quantum-only design, and binds the KEM by concatenating its
+ephemeral secret with the four Diffie--Hellman values inside a single
+transcript-salted extraction (Figure~\ref{fig:hybrid-condition-surface}).
 
-The weakest link in the argument is the hybrid-source reading of the combiner. The concatenation-combiner rationale, grounded in the hybrid-KEM and split-key PRF literature, and the surrogate 4DH Tamarin lemma both support it, but it remains short of a full computational proof for the OPAQUE-derived aPAKE. That distinction matters, because the paper does not claim that the implementation is machine-verified. The claim is narrower: the design, models, tests, and measurements are mutually consistent under the stated assumptions. The consolidated evaluation table (Table~\ref{tab:objective-evidence}) sets each of these claims against its boundary.
+The practical advantages follow from that placement. The post-quantum material
+is ephemeral, so the registration record never grows and migration touches only
+the authentication path. The interaction profile and the augmented trust
+boundary are preserved, which lets operators stage a rollout without re-issuing
+credentials. The cost is dominated by the key-stretching function rather than by
+the post-quantum layer, and the whole artifact is public, version-pinned, and
+archived, so every reported number is reproducible.
 
-\subsection{Performance, KSF Parameters, and the Trust Boundary}
+The approach also has clear disadvantages, and we state them plainly. The
+central post-quantum guarantee rests on the hybrid-source combiner, whose
+robustness we argue in the random-oracle model as an interpretive use of the
+split-key PRF and KEM-combiner literature~\cite{giacon2018,bindel2019} rather
+than as a full computational proof for the OPAQUE-derived aPAKE
+(Eq.~\eqref{eq:hybrid-advantage-bound}). The Tamarin model abstracts the four
+Diffie--Hellman terms into a single hash, so it does not machine-check the
+algebraic forward-secrecy property. The 4DH key schedule and the external
+authenticated-encryption envelope mean that the universal-composability proof of
+classical OPAQUE does not carry over. The post-quantum reinforcement is scoped to
+session-key confidentiality, because the OPRF and password layer remains
+Ristretto255-based and a quantum adversary who records an OPRF evaluation can
+reduce password recovery to an Argon2id-bounded offline search.
 
-The performance profile is governed almost entirely by Argon2id, while ML-KEM-768 and 4DH stay in the sub-millisecond range. The binding deployment constraint is therefore not the absolute cost of ML-KEM-768 but the KSF profile chosen for the target initiator population. Our selected profile suits web and B2B settings, while mobile and edge deployments may need separate KSF calibration and stricter rate limiting.
-
-The trust boundary around $\sigoprf$ is not a cosmetic detail. We claim resistance to offline guessing only for classical database compromise \emph{without} compromise of that secret or the account-specific OPRF key. In operational terms $\sigoprf$ is the root cryptographic secret of the service, and it demands separated storage, segregated access, minimal memory residency, and a rotation policy that treats OPRF-key derivation as privileged cryptographic state. The post-quantum extension does not change the fact that the OPRF layer is Ristretto255-based; a quantum attacker with recorded OPRF evaluations can reduce the password problem to Argon2id-bound offline checking.
-
-One practical advantage of the migration path is that the post-quantum component stays ephemeral and never enlarges the registration record. The work of migration sits in the application-layer authentication logic, version negotiation, and contextual binding of $\acct$. Growth of the wire format to 2715~bytes does make transport constraints more consequential than in classical OPAQUE. For TCP/QUIC this is largely a buffering issue, whereas datagram deployments also have to contend with fragmentation and MTU concerns.
-
-\subsection{Migration, Compatibility, and Operational Viability}
-
-The construction can be deployed without redesigning the entire identity stack, for two reasons. First, the registration record accumulates no long-lived post-quantum material, since ML-KEM appears only in the ephemeral authentication path. Second, explicit wire-format versioning and contextual binding of $\acct$ allow a staged rollout that leaves existing user state intact. For operators, then, migration looks more like controlled protocol evolution than wholesale credential re-issuance.
-
-Operational compatibility matters just as much. Authentication interacts with login-attempt limits, logging, account recovery, anti-fraud analysis, and audit requirements. For that reason the implementation emphasizes deterministic serialization, explicit version checking, and stable external-call boundaries. Failure modes should stay distinguishable, since cryptographic failure, version-negotiation failure, and transport failure carry different operational meanings, and folding them into a generic failed login would obscure diagnosis during deployment. The same separation between cryptographic, transport, and version-negotiation failures matters in audit-heavy cyber-physical deployments, where authentication is one stage of a broader telemetry and inspection pipeline rather than an isolated login step, as noted in the application motivation in Section~1.
-
-\subsection{Reproducibility and Artifact Transparency}
-
-The artifact links the specification to the implementation boundary. The same
-wire sizes, transcript fields, key schedule, and error paths recur across the
-paper, the Rust crates, and the adapter documentation. A reader can therefore
-check the written protocol against executable behavior instead of taking the
-paper and the implementation as two separate claims.
-
-This linkage also keeps our reading of the evidence disciplined. The hybrid-source argument belongs to the Tamarin abstraction and the combiner rationale. Parsing correctness, rejection of non-canonical points, version handling, and prevention of state reuse are properties of the reference implementation and its tests. For post-quantum migration work, that separation pays off, because it exposes the strengths of the artifact without hiding the parts that still need stronger analysis.
-
-\subsection{Validity, Limitations, and Future Directions}
-
-The work carries several material limitations. The implementation is OPAQUE-like rather than fully conformant to RFC~9807 and the associated standard interfaces~\cite{ietf-opaque}. The symbolic models do not replace a computational proof of the implementation code, and the benchmark measurements come from a single hardware platform, so absolute timing values should be carried over to other architectures with caution. The construction also leaves the OPRF layer classical, so post-quantum protection is a session-key property rather than a post-quantum offline-dictionary guarantee. Finally, ML-KEM-768 is a recent standard, and hybridization reduces dependence on any single assumption without removing the need for continued cryptanalysis of the post-quantum layer.
-
-We see four natural directions for extending the work:
-\begin{enumerate}
-  \item adaptation to RFC~9807 and the associated OPAQUE/OPRF
-        ecosystem;
-  \item formalization of the hybrid extension in a computational or UC
-        setting~\cite{canetti2001};
-  \item investigation of alternative KSF profiles and ML-KEM variants
-        for mobile and IoT scenarios;
-  \item integration of external post-quantum signatures for settings in
-        which non-repudiation is required, without altering the baseline
-        HMAC-based handshake confirmation.
-\end{enumerate}
+These boundaries define the open problems left by this work. A full
+computational or universally composable proof of the hybrid combiner, ideally in
+the quantum random-oracle model with the symmetric primitives assumed
+post-quantum-secure, would replace the interpretive argument used here.
+Extending post-quantum protection to the password layer would require a
+practical post-quantum or hybrid OPRF, which current lattice constructions do
+not yet provide at competitive cost~\cite{esgin2024}. A symbolic model that
+separates the classical-only and KEM-only disclosure events, together with a
+cross-platform performance study, would further tighten the evidence. We regard
+these as the natural next steps toward turning a reproducible migration profile
+into a fully proven post-quantum augmented PAKE.
 
 % ============================================================
 \section{Conclusion}
+\label{sec:conclusions}
 % ============================================================
 
-\textbf{Main result.} We specify and evaluate a reproducible OPAQUE
-migration profile that adds ML-KEM-768 to the authenticated transcript
-while preserving the KE1--KE2--KE3 interaction pattern, the augmented-PAKE
-trust boundary, and an account-record model with no persistent
-post-quantum state. The complete hybrid handshake occupies 2715~bytes on
-the wire, a 2272-byte expansion over the classical format. On the stated
-Linux/Xeon platform, the full authentication workload runs in 806.13~ms,
-the isolated ML-KEM-768 round in 336.09~$\mu$s, the 4DH protocol profile in
-224.23~$\mu$s, and the KSF-free hybrid extension adds 351.80~$\mu$s over
-the classical path. Read together, these numbers identify where the
-implementation cost falls. Argon2id dominates latency, whereas ML-KEM
-mainly changes the transport budget.
-
-\textbf{Validated boundary.} The evidence supports a bounded design
-argument rather than a universal security claim. ProVerif confirms the
-modeled secrecy and authentication queries in two separate models,
-Tamarin establishes 8/8 lemmas (seven symbolic properties and one executability check) in a surrogate 4DH model, and the
-reference implementation covers the wire format, the state machine,
-rejection behavior, tests, and benchmark paths. The limitations matter
-just as much. The implementation is not fully RFC~9807
-conformant, the Tamarin model abstracts the concrete Ristretto255
-algebra, the ProVerif strategy is split across two files, the benchmark
-uses one hardware platform, and dictionary resistance is claimed only
-for classical database compromise without compromise of $\sigoprf$ or the
-account-specific OPRF key.
-
-\textbf{Next work.} The natural next step is a conformance-oriented
-profile aligned more tightly with RFC~9807 and the CFRG OPRF
-ecosystem~\cite{rfc9497},
-after which a computational combiner proof or a UC treatment of the
-hybrid extension becomes the priority. Wider hardware measurements remain
-necessary for mobile, browser, and embedded deployments. A hardened
-deployment profile should then add side-channel evaluation, operational
-handling of $\sigoprf$, and a migration plan for environments that
-require post-quantum signatures.
+This work specifies and evaluates Hybrid PQ-OPAQUE, an OPAQUE-derived augmented
+PAKE that adds ephemeral ML-KEM-768 to the authenticated transcript while leaving
+the three-message KE1--KE2--KE3 flow and the account-record model unchanged. The
+construction combines four Ristretto255 Diffie--Hellman values with the ML-KEM
+shared secret through a single transcript-salted HKDF extraction. On the
+benchmark platform it adds 2272 bytes to the wire format and only 351.80
+microseconds of key-stretching-free computation, about 45.8 percent, with
+end-to-end authentication near 806 milliseconds dominated by the Argon2id
+key-stretching function. The design is supported by split ProVerif models, a
+surrogate Tamarin model, and a public, version-pinned Rust artifact, so the
+reported results are reproducible. Its main limitation is that the hybrid-source
+combiner is argued in the random-oracle model rather than proven, and the
+post-quantum guarantee covers session-key confidentiality while the OPRF and
+password layer stays classical. Future work should establish a full
+computational or universally composable proof of the combiner in the quantum
+random-oracle model, extend post-quantum protection to the OPRF layer, and
+calibrate the design across mobile and embedded platforms, turning a reproducible
+migration profile into a fully proven post-quantum augmented PAKE.
 
 % ============================================================
 \section*{Data and Software Availability}
