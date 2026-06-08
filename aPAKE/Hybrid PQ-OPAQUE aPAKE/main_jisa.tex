@@ -253,7 +253,7 @@ archived verification logs, tests, benchmark harnesses, and adapter
 documentation.
 
 \begin{table}[htbp]
-\caption{Evaluation objectives, evidence layers, and claim boundaries used in the manuscript}
+\caption{Evaluation objectives, claims, evidence, and boundaries used in the manuscript}
 \label{tab:objective-evidence}
 \centering\scriptsize
 \begin{tabularx}{\textwidth}{@{}L{3.2cm}L{5.2cm}X@{}}
@@ -270,6 +270,11 @@ reasoning, not a standalone computational proof. \\
 What formal evidence supports the design? & Split ProVerif models and a
 surrogate Tamarin 4DH model & Symbolic evidence does not machine-check the
 Rust implementation or side-channel behavior. \\
+Does database compromise alone enable offline guessing? & OPRF-key separation,
+the database-compromise model, negative regression tests, and the stated
+$\sigoprf$ trust boundary & The claim does not survive compromise of
+$\sigoprf$, and it is not a post-quantum guarantee for recorded OPRF
+evaluations. \\
 What is the measured cost? & Criterion benchmarks on the stated Linux/Xeon
 platform & Timings are platform-specific and require recalibration on mobile,
 browser, and embedded targets. \\
@@ -2034,41 +2039,7 @@ Key-source recovery condition & Weakening of the classical contribution & Break 
 
 The evidence is layered, not monolithic, and each layer answers a different question. ProVerif handles secrecy and correspondence in symbolic models, Tamarin captures stateful properties of the surrogate 4DH model, and the Rust test suite exercises executable behavior that symbolic tools never see, including serialization, state lifetime, boundary checks, version handling, and the external API contract. All three point to the same protocol description, yet they do not carry the same evidentiary weight.
 
-The weakest link in the argument is the hybrid-source reading of the combiner. The concatenation-combiner rationale, grounded in the hybrid-KEM and split-key PRF literature, and the surrogate 4DH Tamarin lemma both support it, but it remains short of a full computational proof for the OPAQUE-derived aPAKE. That distinction matters, because the paper does not claim that the implementation is machine-verified. The claim is narrower: the design, models, tests, and measurements are mutually consistent under the stated assumptions. Table~\ref{tab:claim-scope} sets each of these claims against its boundary.
-
-\begin{table}[htbp]
-\caption{Scope of the main claims and supporting evidence}
-\label{tab:claim-scope}
-\centering\scriptsize
-\begin{tabularx}{\textwidth}{@{}L{3.0cm}L{5.2cm}X@{}}
-\toprule
-Claim & Evidence used in the paper & Boundary of the claim \\
-\midrule
-Fixed-round hybridization & Explicit message syntax, transcript
-definitions, wire-format accounting, and Rust serialization tests &
-The construction is OPAQUE-like and does not claim complete
-RFC~9807 conformance. \\
-Transcript-bound post-quantum contribution & Key-schedule equations,
-context binding through $\acct$, formal models, and integration tests &
-The formal tools reason about symbolic abstractions, not the compiled
-binary or side-channel behavior. \\
-Resistance to database-only offline guessing & OPRF-key separation,
-database-compromise model, negative regression tests, and the stated
-trust boundary for $\sigoprf$ & The claim does not survive compromise of
-the OPRF root secret or a deployment that stores it with the password
-database, and it is not a post-quantum guarantee for recorded OPRF
-evaluations. \\
-Hybrid-source key dependence & HKDF split-key PRF combiner rationale, the
-surrogate 4DH Tamarin lemma, and agreement between the specification and
-implementation paths & This is evidence for the intended combiner
-interpretation, not a full computational proof of the hybrid PAKE. \\
-Practical overhead is dominated by the KSF & Criterion measurements for
-primitive costs, end-to-end authentication, and message-size accounting &
-The absolute timings are platform-specific and must be recalibrated for
-mobile, embedded, or high-latency deployments. \\
-\bottomrule
-\end{tabularx}
-\end{table}
+The weakest link in the argument is the hybrid-source reading of the combiner. The concatenation-combiner rationale, grounded in the hybrid-KEM and split-key PRF literature, and the surrogate 4DH Tamarin lemma both support it, but it remains short of a full computational proof for the OPAQUE-derived aPAKE. That distinction matters, because the paper does not claim that the implementation is machine-verified. The claim is narrower: the design, models, tests, and measurements are mutually consistent under the stated assumptions. The consolidated evaluation table (Table~\ref{tab:objective-evidence}) sets each of these claims against its boundary.
 
 \subsection{Performance, KSF Parameters, and the Trust Boundary}
 
