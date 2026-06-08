@@ -567,13 +567,23 @@ concrete wire syntax and artifact evidence instead of a general
 composition proof. Relative to transport-only hybridization, it folds
 the post-quantum contribution into the password-authentication
 transcript itself.
-The placement of the KEM is therefore different: CHIC treats lattice-based
-material inside a compact PAKE design with its own proof structure, whereas
-Hybrid PQ-OPAQUE inserts an ephemeral ML-KEM contribution into the OPAQUE
-authentication transcript and leaves the OPRF/password layer classical. The
-CFRG-related hybrid PAKE draft~\cite{vos2025} addresses generic hybridization
-patterns, while this paper fixes one byte-level OPAQUE migration profile and
-reports executable evidence for that profile.
+The placement of the KEM is therefore different across these designs. CHIC is a
+balanced, post-quantum-only PAKE in the EKE-KEM family, in which the password
+masks a lattice KEM public key and the KEM is the core of the exchange, with
+universal-composability security proved under one-way and anonymity assumptions
+on the KEM. CPaceOQUAKE+, specified in the CFRG hybrid-PAKE draft~\cite{vos2025},
+is a hybrid augmented PAKE that composes a classical CPace run with a
+post-quantum OQUAKE run in sequence, chains their transcripts and keys over a
+five-message flow, and is a construction specification that relies on external
+analyses rather than an in-document proof. Hybrid PQ-OPAQUE differs on the three
+axes that matter for a migration. It keeps the asymmetric OPAQUE record model
+and the unchanged three-message KE1--KE2--KE3 flow rather than introducing a new
+or longer interaction. It is a classical-plus-post-quantum hybrid rather than a
+post-quantum-only PAKE. And it binds the KEM by concatenating the ephemeral
+ML-KEM secret with the four Diffie--Hellman values inside a single
+transcript-salted extraction, rather than running a second PAKE in sequence or
+making the KEM the core primitive, while leaving the OPRF and password layer
+classical.
 
 % ============================================================
 \section{Problem Statement}
@@ -1679,10 +1689,14 @@ To avoid overstating the formal results, we record four principal limitations.
 
 \subsection{Architecture of the Reference Implementation}
 
-We implement the protocol in \textbf{Rust~1.93.1} as a multi-crate
+We implement the protocol in \textbf{Rust~1.96.0} as a multi-crate
 workspace. The choice of Rust rests on compile-time memory safety, on a
 cryptographic core that we keep free of \codeid{unsafe} blocks, and on
-mature mechanisms for secret zeroization.
+mature mechanisms for secret zeroization. The cryptographic primitives use
+pinned RustCrypto and dalek crates, principally \codeid{curve25519-dalek}~4.1.3,
+\codeid{ml-kem}~0.2.3, \codeid{argon2}~0.5.3, \codeid{hmac}~0.12.1,
+\codeid{sha2}~0.10.9, \codeid{salsa20}~0.10.2, and \codeid{poly1305}~0.8.0, with
+the full set fixed in the archived \texttt{Cargo.lock}.
 Table~\ref{tab:code-metrics} reports the implementation surface that
 backs the evaluation.
 
@@ -1825,7 +1839,7 @@ which the security claims rest.
 We ran the benchmarks on a Linux server with two
 Intel~Xeon~E5-2650~v4 processors (24 physical cores, 48 hardware
 threads, 60~MiB aggregate L3 cache, Ubuntu kernel~6.8.0-111,
-Rust~1.93.1) in deterministic optimized-build mode.
+Rust~1.96.0) in deterministic optimized-build mode.
 Criterion estimates the mean and the 95\% confidence interval by
 bootstrap within the reviewed benchmark session. The values reported below
 should therefore be read as single-session estimates for this platform, not as
