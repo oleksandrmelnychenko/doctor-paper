@@ -206,14 +206,12 @@ and HKDF follows RFC~5869~\cite{krawczyk2010}. Argon2id~\cite{biryukov2016}
 provides the password-hardening baseline, and Criterion~\cite{heisler2023}
 serves only to take the measurements reported later.
 
-A second motivation comes from a less obvious setting. In audit-heavy
-cyber-physical systems a login is seldom an isolated web session. More often
-it is one event in a longer chain of telemetry, inspection, and operational
-control~\cite{svystun2025dytam,svystun2024thermal,lysyi2025fire}. Such systems
-reward protocols with stable, recordable transcripts and unambiguous failure
-behavior, and that expectation informs several of the design choices below.
-These applications motivate the engineering, but they do not by themselves
-vouch for the cryptographic security of Hybrid PQ-OPAQUE.
+A second motivation comes from audit-heavy cyber-physical systems, where a login
+is one event in a longer chain of telemetry, inspection, and operational control
+rather than an isolated web session~\cite{svystun2025dytam,svystun2024thermal,lysyi2025fire}.
+Such settings reward stable, recordable transcripts and unambiguous failure
+behavior, which informs several design choices below, though it does not by
+itself vouch for the cryptographic security of Hybrid PQ-OPAQUE.
 
 \subsection{Research Scope and Evaluation Objective}
 
