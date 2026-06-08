@@ -129,7 +129,7 @@ offline guessing surface. Password-authenticated key exchange (PAKE) changes
 this interface, so the password proves knowledge and derives fresh keys
 rather than being delivered to the service. For account systems the augmented
 form fits best, because the record-holding side authenticates users without
-storing a password verifier. OPAQUE is a mature realization of this model,
+storing the password itself or a password-equivalent verifier. OPAQUE is a mature realization of this model,
 yet its protection against future quantum adversaries is limited by a purely
 classical key-exchange layer whose transcript carries no post-quantum secret.
 
@@ -707,11 +707,11 @@ $\mathrm{HKDF\text{-}Extract}(\mathrm{salt}_{\tau},
 \mathrm{IKM}_{\mathrm{cl}}\|\mathrm{IKM}_{\mathrm{pq}})$ is modeled as
 pseudorandom up to an additive advantage
 $\mathrm{Adv}_{\mathrm{HKDF}}^{\mathrm{skPRF}}$. In this random-oracle reading the
-construction matches the concatenation split-key PRF
+construction corresponds to the concatenation split-key PRF
 $W = H(k_1\|\cdots\|k_n,\mathrm{label})$ of Giacon, Heuer, and
 Poettering~\cite{giacon2018}, for which an unpredictable high-min-entropy
 component of the input, whether a whole source or a surviving substring such as
-$dh_4$, yields a pseudorandom output regardless of the adversary-known remainder
+$dh_4$, is modeled as yielding a pseudorandom output regardless of the adversary-known remainder
 and the public salt.
 \end{definition}
 
@@ -1431,7 +1431,7 @@ $\mathrm{Adv}_{\mathrm{HKDF}}^{\mathrm{skPRF}}$ term.}
 responder state described above, so a replayed KE1 produces a fresh KE2 the
 attacker cannot complete, and a replayed KE3 cannot be retried against a
 consumed responder state. Ephemeral nonces (192 bits) and ephemeral keys are
-generated afresh for every session, which adds a secondary uniqueness guarantee.
+generated afresh for every session, which adds a secondary uniqueness mechanism.
 For $N$ sessions using uniformly sampled 192-bit nonces, the birthday-bound
 collision probability is approximately $N(N-1)/2^{193}$.
 
@@ -1497,7 +1497,7 @@ State lifecycle & State consumption, replay rejection, failure-state invalidatio
 External adapter contract & Public error categories, buffer ownership, safe release paths & Correct integration by arbitrary foreign callers. \\
 Benchmark harnesses & Primitive and protocol workloads under Criterion & Universal timing behavior across platforms. \\
 \midrule
-Total test outcome & 157 passed, 1 intentionally ignored slow regression & Exhaustive implementation correctness. \\
+Total test outcome & 157 passed, 1 intentionally ignored slow regression & Exhaustive correctness over all implementation states. \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -1544,7 +1544,7 @@ Lemma & Steps & Key property \\
 \midrule
 Session-key secrecy (P1) & 27 & Without corruption events, the adversary cannot derive the session key \\
 Password secrecy (P2) & 3 & The password never appears in externally observable model events \\
-Forward secrecy (P3) & 119 & The session key remains non-derivable after post-session long-term key compromise, assuming session ephemerals are not disclosed \\
+Forward secrecy (P3) & 119 & In the surrogate model, the session key remains non-derivable after post-session long-term key compromise, assuming session ephemerals are not disclosed \\
 Initiator authentication (P5a) & 32 & Successful initiator completion requires prior responder participation \\
 Responder authentication (P5b) & 17 & Successful responder completion requires a valid KE3 \\
 Hybrid-source interpretation (P6) & 29 & Without the modeled session-ephemeral disclosure event, the abstract 4DH/KEM key material remains non-derivable \\
